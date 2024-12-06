@@ -61,6 +61,7 @@ import io.micronaut.expressions.parser.token.TokenType;
 import io.micronaut.expressions.parser.token.Tokenizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static io.micronaut.expressions.parser.token.TokenType.*;
@@ -469,7 +470,7 @@ public final class SingleEvaluatedExpressionParser implements EvaluatedExpressio
         parts.add(eat(IDENTIFIER).value());
         while (lookahead != null && lookahead.type() == DOT) {
             eat(DOT);
-            parts.add(eat(IDENTIFIER).value());
+            parts.add(eat(IDENTIFIER, ENVIRONMENT).value());
         }
 
         if (wrapped) {
@@ -558,5 +559,22 @@ public final class SingleEvaluatedExpressionParser implements EvaluatedExpressio
 
         lookahead = tokenizer.getNextToken();
         return token;
+    }
+
+    private Token eat(TokenType... tokenTypes) {
+        if (lookahead == null) {
+            throw new ExpressionParsingException("Unexpected end of input. Expected any of: '" + Arrays.toString(tokenTypes) + "'");
+        }
+
+        Token token = lookahead;
+
+        for (TokenType type : tokenTypes) {
+            if (token.type() == type) {
+                lookahead = tokenizer.getNextToken();
+                return token;
+            }
+        }
+
+        throw new ExpressionParsingException("Unexpected token: " + token.value() + ". Expected any of: '" + Arrays.toString(tokenTypes) + "'");
     }
 }
